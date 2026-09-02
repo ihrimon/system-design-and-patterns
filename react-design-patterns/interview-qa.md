@@ -112,4 +112,77 @@ Key points an interviewer looks for: state initialized to `""` (not `undefined`,
 
 ---
 
-<!-- Add Day 2 questions below as you complete Day 2 -->
+## Day 2 — State Management Patterns
+
+### Q1. What problem does React Context solve, and when should you reach for it?
+
+**A.** Context lets any descendant component read a value directly from an ancestor, without every intermediate component having to accept and forward it as a prop ("prop drilling"). Reach for it when data is genuinely cross-cutting — theme, locale, current user, feature flags — needed by components scattered around the tree, not just a parent and its immediate child (plain props are simpler there).
+
+### Q2. What's the difference between just using `createContext`/`useContext` directly versus the "Provider Pattern"?
+
+**A.** Raw Context only gives you a way to pass a value down the tree. The Provider Pattern wraps that in a dedicated `<XProvider>` component that owns the state/logic, plus a custom hook (`useAuth()`, `useTheme()`) that reads the context *and* validates it was actually provided — throwing a clear error like `"useAuth must be used within an AuthProvider"` instead of silently returning `undefined`. It also hides the raw context object from consumers entirely, so they never import it directly.
+
+### Q3. Why should you always expose a custom hook (`useAuth`) instead of letting consumers call `useContext(AuthContext)` directly?
+
+**A.** Three reasons: (1) **Safety** — the hook can check `if (!ctx) throw new Error(...)`, catching "used outside provider" bugs immediately at the call site instead of a silent `undefined` bug appearing later. (2) **Encapsulation** — consumers never need to know a Context object exists; you can refactor the internal implementation (even move away from Context entirely) without touching consumer code. (3) **Discoverability** — `useAuth()` documents intent far better than `useContext(AuthContext)`.
+
+### Q4. What's a major performance pitfall of Context, and how do you fix it?
+
+**A.** Every component that consumes a context re-renders whenever that context's value changes — even if the consumer only cares about part of it. Two common causes and fixes:
+- Passing a new object literal as the `value` prop on every render (`<Ctx.Provider value={{ user, login }}>`) creates a new reference every time, forcing all consumers to re-render even if nothing meaningful changed. In React 18 and earlier the fix is to wrap the value in `useMemo` so the reference is stable unless a dependency actually changes; in React 19 with the React Compiler enabled, this is memoized automatically and manual `useMemo` is no longer needed for this case.
+- One large context holding many unrelated fields means a change to any field re-renders every consumer of the whole context. Fix: split into multiple smaller, focused contexts (e.g. separate `UserContext` and `ThemeContext`) so consumers only re-render for the slice they actually use.
+
+### Q5. When would you reach for `useReducer` instead of several `useState` calls?
+
+**A.** When state has multiple related fields that must update together and staying in sync by hand across several `useState` setters is error-prone (e.g. cart `items` and `total`), when there are many distinct kinds of updates (more than 3–4 "events"), or when the next state depends on the previous state in a non-trivial way. If it's a couple of independent, simple fields, plain `useState` is simpler and has less boilerplate — don't reach for `useReducer` just because it "looks more professional."
+
+### Q6. How does `useReducer` compare to Redux?
+
+**A.** They share the exact same core idea: a pure reducer function `(state, action) => newState`, and you trigger transitions by dispatching action objects instead of calling setters directly. The difference is scope — `useReducer` manages state local to one component subtree (usually paired with Context to share it), while Redux manages a single global store outside the component tree, with middleware, devtools, and time-travel debugging built around that same reducer concept. If you're comfortable with `useReducer`, you already understand Redux's core mental model.
+
+### Q7. Coding question: write a reducer for a shopping cart supporting `ADD_ITEM` and `REMOVE_ITEM`, keeping a running `total` in sync.
+
+```tsx
+type CartItem = { id: string; price: number };
+type CartState = { items: CartItem[]; total: number };
+type CartAction =
+  | { type: "ADD_ITEM"; item: CartItem }
+  | { type: "REMOVE_ITEM"; id: string };
+```
+
+**A.**
+
+```tsx
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case "ADD_ITEM": {
+      const items = [...state.items, action.item];
+      return { items, total: items.reduce((sum, i) => sum + i.price, 0) };
+    }
+    case "REMOVE_ITEM": {
+      const items = state.items.filter((i) => i.id !== action.id);
+      return { items, total: items.reduce((sum, i) => sum + i.price, 0) };
+    }
+    default:
+      return state;
+  }
+}
+```
+
+Key points an interviewer looks for: the reducer is a pure function (no side effects, returns a new state object rather than mutating), every action recomputes `total` from `items` so the two fields can never drift out of sync, and a `default` case returning unchanged state for safety.
+
+### Q8. Can you combine Context and `useReducer`? Why would you?
+
+**A.** Yes — this is one of the most common patterns for app-wide state without an external library. A Provider internally holds `const [state, dispatch] = useReducer(reducer, initialState)`, then shares `{ state, dispatch }` through Context. Any descendant can then call a custom hook (e.g. `useCart()`) to read state or dispatch actions, without prop drilling and without needing Redux for moderate-complexity global state.
+
+### Q9. What's a common bug when creating a context's `value` inline in JSX, and how do you fix it?
+
+**A.** Writing `<AuthContext.Provider value={{ user, login, logout }}>` creates a brand-new object every single render, even if `user`, `login`, and `logout` haven't actually changed — because object literals are never `===` to a previous render's object. Every consumer re-renders as a result, regardless of whether anything meaningful changed. **Fix (pre-React 19 / no compiler):** wrap it in `useMemo(() => ({ user, login, logout }), [user])` so the reference only changes when a real dependency changes. **In React 19 with the React Compiler enabled**, the compiler detects this at build time and memoizes it for you automatically — you can write the plain object literal and get the same stable-reference behavior without touching `useMemo` yourself. It's still worth knowing the manual fix, since plenty of production codebases haven't adopted the compiler yet.
+
+### Q10. Name two popular libraries whose public API is essentially the Provider Pattern.
+
+**A.** React Query (`<QueryClientProvider>` + `useQueryClient()`/`useQuery()`), Redux (`<Provider store={store}>` + `useSelector()`/`useDispatch()`), NextAuth (`<SessionProvider>` + `useSession()`), and Radix/shadcn UI's `<ThemeProvider>` + `useTheme()` all follow the exact same shape: a provider component owning state, paired with a custom hook for safe, encapsulated access.
+
+---
+
+<!-- Add Day 3 questions below as you complete Day 3 -->

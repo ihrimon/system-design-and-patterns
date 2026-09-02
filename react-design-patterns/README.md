@@ -11,11 +11,12 @@
 
 📖 Deep dive → [Day 1 — Component Fundamentals Patterns](day-01-component-fundamentals-patterns/README.md)
 
-### Day 2 — State Management Patterns
+### Day 2 — State Management Patterns ✅
 
-- [ ] Context Pattern
-- [ ] Provider Pattern
-- [ ] State Reducer Pattern
+- [x] Provider Pattern
+- [x] State Reducer Pattern
+
+📖 Deep dive → [Day 2 — State Management Patterns](day-02-state-management-patterns/README.md)
 
 ### Day 3 — Logic Reuse Patterns
 
