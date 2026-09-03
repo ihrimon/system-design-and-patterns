@@ -18,11 +18,13 @@
 
 📖 Deep dive → [Day 2 — State Management Patterns](day-02-state-management-patterns/README.md)
 
-### Day 3 — Logic Reuse Patterns
+### Day 3 — Logic Reuse Patterns ✅
 
-- [ ] Custom Hooks Pattern
-- [ ] Hook Composition Pattern
-- [ ] Hook Factory Pattern
+- [x] Custom Hooks Pattern
+- [x] Hook Composition Pattern
+- [x] Hook Factory Pattern
+
+📖 Deep dive → [Day 3 — Logic Reuse Patterns](day-03-logic-reuse-patterns/README.md)
 
 ### Day 4 — Advanced Component API Patterns
 

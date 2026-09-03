@@ -185,4 +185,84 @@ Key points an interviewer looks for: the reducer is a pure function (no side eff
 
 ---
 
-<!-- Add Day 3 questions below as you complete Day 3 -->
+## Day 3 — Logic Reuse Patterns
+
+### Q1. What is a custom hook, and what problem does it solve?
+
+**A.** A custom hook is just a function whose name starts with `use` that calls other hooks (`useState`, `useEffect`, etc.) internally, letting you extract stateful logic out of a component so it can be reused. It solves duplication: without it, logic like "fetch this URL, track loading/error state, clean up on unmount" gets copy-pasted into every component that needs it, and a bug fix in one copy never reaches the others. With a shared `useFetch(url)` hook, every consumer gets the fix automatically.
+
+### Q2. Does a custom hook share state between the components that use it?
+
+**A.** No — this is a common misconception. Each call to a custom hook gets its own independent state. If `ProductList` and `OrderList` both call `useFetch(url)`, they each get their own `data`/`loading`/`error` state; nothing is shared between them. What's shared is the *logic* (the implementation), not the state itself.
+
+### Q3. Coding question: extract the duplicated fetch logic below into a reusable `useFetch` hook.
+
+```tsx
+function ProductList() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch("/api/products").then((r) => r.json()).then((data) => {
+      setProducts(data);
+      setLoading(false);
+    });
+  }, []);
+  // ...
+}
+```
+
+**A.**
+
+```tsx
+function useFetch<T>(url: string) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+    setLoading(true);
+    fetch(url)
+      .then((r) => r.json())
+      .then((json) => isActive && setData(json))
+      .finally(() => isActive && setLoading(false));
+    return () => { isActive = false; };
+  }, [url]);
+
+  return { data, loading };
+}
+
+function ProductList() {
+  const { data: products, loading } = useFetch<Product[]>("/api/products");
+  // ...
+}
+```
+
+Key points an interviewer looks for: generic `<T>` so it works for any resource type, an `isActive` flag (or `AbortController`) in the cleanup function to avoid setting state after unmount, and `url` in the dependency array so the hook refetches if the URL changes.
+
+### Q4. What is Hook Composition, and how is it different from just calling multiple hooks inside a component?
+
+**A.** Hook Composition means building a higher-level hook by calling several lower-level hooks *inside another custom hook*, then returning the combined/derived result — e.g. `useProductState(id)` internally calling `useAuth()`, `useWishlist()`, and `useCart()` to return `{ isWishlisted, cartQuantity, canPurchase }`. The difference from calling all three hooks directly inside a component is reuse and separation of concerns: if two different components (a product detail page and a product card) both need that same combination, composing it into one hook means the derivation logic exists in exactly one place instead of being copy-pasted into every consuming component.
+
+### Q5. What is the Hook Factory Pattern, and when would you reach for it instead of writing hooks by hand?
+
+**A.** A hook factory is a function that *generates* a hook, parameterized by whatever varies between use cases (a URL, a storage key, an event name) — e.g. `createResourceHook<T>(endpoint)` returns a ready-to-use `useResource()` hook. Reach for it when you need the same *shape* of hook for 3+ resources that differ only in a parameter (`useUsers`, `useProducts`, `useOrders` all fetching different endpoints with identical logic). For only one or two resources, or when each one's logic genuinely diverges, a factory just adds indirection — write them by hand instead.
+
+### Q6. In a `createApiHook<T>(url)`-style factory, what does the factory actually return, and why is that useful?
+
+**A.** It returns a *function* (the hook itself), not the data directly — calling `createApiHook<T>(url)` produces a new `useX()` hook that, when called inside a component, internally manages its own `data`/`loading`/`error` state via `useState`/`useEffect`. This is useful because you can generate an unlimited number of independent, fully-functional hooks (one per endpoint) from a single implementation, and each generated hook still follows React's rules of hooks correctly since it's a real hook, not a plain utility function.
+
+### Q7. What's a real risk of overusing custom hooks or hook composition?
+
+**A.** Over-abstracting a single, one-off piece of logic into a named hook before it has a second consumer — this adds an indirection layer (you now have to jump to another file to understand what a component does) with no actual reuse benefit yet. The rule of thumb from this checklist's Day 1–3 patterns: extract only once you have (or clearly anticipate) a second consumer, not preemptively.
+
+### Q8. How do Custom Hooks, Hook Composition, and Hook Factory relate to each other in a real codebase?
+
+**A.** They typically layer: a Hook Factory generates many low-level, `useFetch`-style Custom Hooks consistently (e.g. one per API resource); Hook Composition then sits a level above, combining several of those (possibly factory-generated) hooks into the exact shape a specific screen or component needs. You rarely pick just one — a mature dashboard codebase usually has all three working together.
+
+### Q9. What's the relationship between the Custom Hooks Pattern here and libraries like React Query or SWR?
+
+**A.** React Query and SWR are productionized, battle-tested versions of the same `useFetch`-style custom hook idea, extended with caching, request deduplication, background refetching, and stale-data handling that a hand-rolled `useFetch` doesn't have. Understanding why you'd extract `useFetch` in the first place is exactly what makes adopting React Query later make sense — it's solving the same duplication problem, just with far more production-grade behavior built in. (This connects directly to the **Server State Pattern**, Day 7.)
+
+---
+
+<!-- Add Day 4 questions below as you complete Day 4 -->

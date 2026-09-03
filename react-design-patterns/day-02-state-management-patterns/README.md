@@ -114,7 +114,7 @@ And at the product level: dark/light mode on GitHub and Twitter/X, the logged-in
 
 ### Practice exercise
 
-Look at `react-design-patterns-workshop/lecture-3/src/demo/pp/ServiceProvider.tsx` in this repo — it's a real implementation of this exact pattern (injecting an `ApiClient` and `Logger` via `useService()`). Then build your own `CartProvider` + `useCart()` following the same 4 steps above: typed context value, a provider component owning `items` state, a hook that throws if called outside `<CartProvider>`, and a consumer component that only ever calls `useCart()`.
+Build your own `CartProvider` + `useCart()` following the same 4 steps above: typed context value, a provider component owning `items` state, a hook that throws if called outside `<CartProvider>`, and a consumer component that only ever calls `useCart()`.
 
 ### When to use
 
