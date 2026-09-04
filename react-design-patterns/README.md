@@ -1,51 +1,53 @@
-# React Design Patterns — 10-Day Learning Checklist
+# React Design Patterns: 10-Day Learning Checklist
 
-> A simple, ordered checklist of React design patterns to learn — one pattern-family per day across 10 days. Built from this repo's pattern guides and workshop lectures.
+> A simple, ordered checklist of React design patterns to learn: one pattern-family per day across 10 days. Built from this repo's pattern guides and workshop lectures.
 
-### Day 1 — Component Fundamentals Patterns ✅
+### Day 1: Component Fundamentals Patterns ✅
 
 - [x] Component Composition Pattern
 - [x] Children Pattern
 - [x] Controlled Component Pattern
 - [x] Uncontrolled Component Pattern
 
-📖 Deep dive → [Day 1 — Component Fundamentals Patterns](day-01-component-fundamentals-patterns/README.md)
+📖 Deep dive → [Day 1: Component Fundamentals Patterns](day-01-component-fundamentals-patterns/README.md)
 
-### Day 2 — State Management Patterns ✅
+### Day 2: State Management Patterns ✅
 
 - [x] Provider Pattern
 - [x] State Reducer Pattern
 
-📖 Deep dive → [Day 2 — State Management Patterns](day-02-state-management-patterns/README.md)
+📖 Deep dive → [Day 2: State Management Patterns](day-02-state-management-patterns/README.md)
 
-### Day 3 — Logic Reuse Patterns ✅
+### Day 3: Logic Reuse Patterns ✅
 
 - [x] Custom Hooks Pattern
 - [x] Hook Composition Pattern
 - [x] Hook Factory Pattern
 
-📖 Deep dive → [Day 3 — Logic Reuse Patterns](day-03-logic-reuse-patterns/README.md)
+📖 Deep dive → [Day 3: Logic Reuse Patterns](day-03-logic-reuse-patterns/README.md)
 
-### Day 4 — Advanced Component API Patterns
+### Day 4: Advanced Component API Patterns ✅
 
-- [ ] Compound Components Pattern
-- [ ] Provider + Compound Components Pattern
-- [ ] Dual-Mode (Controlled/Uncontrolled) API Pattern
+- [x] Compound Components Pattern
+- [x] Provider + Compound Components Pattern
+- [x] Dual-Mode (Controlled/Uncontrolled) API Pattern
 
-### Day 5 — Data & Service Layer Patterns
+📖 Deep dive → [Day 4: Advanced Component API Patterns](day-04-advanced-component-api-patterns/README.md)
+
+### Day 5: Data & Service Layer Patterns
 
 - [ ] Service Layer Pattern
 - [ ] Repository Pattern
 - [ ] Facade Pattern
 - [ ] Dependency Injection Pattern
 
-### Day 6 — Application Architecture Patterns
+### Day 6: Application Architecture Patterns
 
 - [ ] Feature-Based Architecture Pattern
 - [ ] Atomic Design Pattern
 - [ ] Container/Presentational Pattern
 
-### Day 7 — Server State & Data Fetching Patterns
+### Day 7: Server State & Data Fetching Patterns
 
 - [ ] Server State Pattern
 - [ ] Effect Synchronization Pattern
@@ -53,21 +55,21 @@
 - [ ] Pagination Pattern
 - [ ] Infinite Scroll Pattern
 
-### Day 8 — Performance Patterns
+### Day 8: Performance Patterns
 
 - [ ] Lazy Loading Pattern
 - [ ] Code-Splitting Pattern
 - [ ] Suspense Pattern
 - [ ] Virtualization Pattern
 
-### Day 9 — Reliability Patterns
+### Day 9: Reliability Patterns
 
 - [ ] Error Boundary Pattern
 - [ ] Retry Pattern
 - [ ] Fallback UI Pattern
 - [ ] Portal Pattern
 
-### Day 10 — Classic Software Design Patterns
+### Day 10: Classic Software Design Patterns
 
 - [ ] Strategy Pattern
 - [ ] Factory Pattern

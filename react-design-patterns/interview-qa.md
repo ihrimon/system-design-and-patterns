@@ -265,4 +265,63 @@ Key points an interviewer looks for: generic `<T>` so it works for any resource 
 
 ---
 
-<!-- Add Day 4 questions below as you complete Day 4 -->
+## Day 4: Advanced Component API Patterns
+
+### Q1. What is the Compound Components Pattern, and what problem does it solve?
+
+**A.** Compound Components is a set of components that work together as a family (like `Tabs`, `Tabs.List`, `Tabs.Tab`, `Tabs.Panel`), sharing internal state through React Context instead of the parent passing that state down as props. It solves the rigidity of a config-object API: a `Tabs` component that takes a `tabs: { label, content }[]` prop can only support what that shape anticipated. Compound components let the consumer write plain JSX, so adding an icon, a badge, or a tooltip to one tab is just JSX, not a new prop on the config object.
+
+### Q2. How does a subcomponent like `Tabs.Tab` get access to shared state without the parent passing it a prop?
+
+**A.** The top-level component (`Tabs`) wraps its children in a Context Provider holding the shared state (e.g. `{ active, setActive }`). Each subcomponent calls a custom hook (`useTabsContext()`) that reads from that context. This is the same mechanism as the Provider Pattern from Day 2, just applied so the "consumers" are a fixed family of subcomponents instead of arbitrary parts of the app.
+
+### Q3. Why attach subcomponents as properties on the parent (`Tabs.List = TabList`) instead of exporting them separately?
+
+**A.** It keeps the API self-documenting and scoped: importing `Tabs` gives you `Tabs.List`, `Tabs.Tab`, and `Tabs.Panel` together, signaling they're meant to be used only inside `<Tabs>`, rather than as standalone components that happen to share a name convention. It also avoids polluting the module's export list with several tightly coupled pieces.
+
+### Q4. What's the difference between the Compound Components Pattern and the Provider + Compound Components Pattern?
+
+**A.** They're the same underlying mechanism (subcomponents sharing state via Context) at different levels of rigor. Plain Compound Components (like `Tabs` sharing just an `active` index) can get away with a simple Context and a small hook. Provider + Compound Components is for cases where the shared state is complex enough (multiple fields, side effects, a callback notifying a parent form) that it needs the fuller treatment from Day 2's Provider Pattern: a dedicated provider component, and a custom hook that throws a clear error if a subcomponent is used outside its provider.
+
+### Q5. Coding question: a `SelectItem` component reads `select` from `useSelectContext()`. What happens if someone renders `<Select.Item>` outside of a `<Select>`, and how do you make the failure clear instead of confusing?
+
+**A.**
+
+```tsx
+function useSelectContext() {
+  const ctx = useContext(SelectContext);
+  if (!ctx) throw new Error("Select subcomponents must be used inside <Select>");
+  return ctx;
+}
+```
+
+Without the `if (!ctx) throw`, `useContext` would silently return the context's default value (often `null` or `undefined`), and `SelectItem` would fail later with a cryptic error like "Cannot read properties of null" when it tries to call `select(...)`. The explicit throw fails immediately, at the exact call site, with a message that tells the developer exactly what's wrong.
+
+### Q6. What is the Dual-Mode (Controlled/Uncontrolled) API Pattern, and how is it different from the Controlled/Uncontrolled Component Pattern from Day 1?
+
+**A.** Day 1's Controlled and Uncontrolled patterns describe two different ways *you*, as the app developer, can use a component: pass `value` and own the state yourself, or pass `defaultValue` and let the DOM/component own it. The Dual-Mode API Pattern is about *building* a component (typically for a shared library) that supports both of those usage styles at once, so its consumers can choose either one without the library author writing two separate components.
+
+### Q7. Coding question: explain what `useControllableState` does and why `controlledValue !== undefined` is the check used to decide the mode.
+
+```tsx
+function useControllableState<T>(controlledValue: T | undefined, defaultValue: T) {
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const isControlled = controlledValue !== undefined;
+  const value = isControlled ? controlledValue : internalValue;
+  return [value, setInternalValue] as const;
+}
+```
+
+**A.** It always keeps an internal `useState` around (for the uncontrolled case), but the actual `value` it returns is either the caller-supplied `controlledValue` (if one was passed) or that internal state. The `!== undefined` check is the signal for "was a value passed in at all": if the consumer never passes the `open` prop, it's `undefined`, so the hook falls back to managing its own state; the moment a consumer passes any defined value (even `false`), the component treats it as controlled and defers to that value entirely.
+
+### Q8. If a component using `useControllableState` is controlled, does calling the returned setter function actually change what's rendered?
+
+**A.** No, and this is a common source of bugs when implementing this pattern: in controlled mode, `setInternalValue` still updates the internal state, but the hook returns `controlledValue` (the prop), not `internalValue`, so the render is unaffected. The component must call the consumer's `onChange`/`onOpenChange` callback so the consumer updates their own state, which flows back down as a new `controlledValue` on the next render. This is exactly how the native `<input value={...} onChange={...}>` works too.
+
+### Q9. When would you deliberately *not* build a dual-mode component, even in a shared UI library?
+
+**A.** When every realistic consumer needs the same mode. Supporting both adds real complexity (the `useControllableState` indirection, and the mental overhead of "which mode am I in" for every future contributor touching the component). If a component is genuinely only ever used one way in practice, hardcode that mode and add the other later if a real need for it shows up, rather than building flexibility speculatively.
+
+---
+
+<!-- Add Day 5 questions below as you complete Day 5 -->
