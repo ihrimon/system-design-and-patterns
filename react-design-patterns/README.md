@@ -34,12 +34,14 @@
 
 📖 Deep dive → [Day 4: Advanced Component API Patterns](day-04-advanced-component-api-patterns/README.md)
 
-### Day 5: Data & Service Layer Patterns
+### Day 5: Data & Service Layer Patterns ✅
 
-- [ ] Service Layer Pattern
-- [ ] Repository Pattern
-- [ ] Facade Pattern
-- [ ] Dependency Injection Pattern
+- [x] Service Layer Pattern
+- [x] Repository Pattern
+- [x] Facade Pattern
+- [x] Dependency Injection Pattern
+
+📖 Deep dive → [Day 5: Data & Service Layer Patterns](day-05-data-and-service-layer-patterns/README.md)
 
 ### Day 6: Application Architecture Patterns
 

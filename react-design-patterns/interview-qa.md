@@ -324,4 +324,126 @@ function useControllableState<T>(controlledValue: T | undefined, defaultValue: T
 
 ---
 
-<!-- Add Day 5 questions below as you complete Day 5 -->
+## Day 5 — Data & Service Layer Patterns
+
+### Q1. What is the Service Layer Pattern, and what problem does it solve?
+
+**A.** It's the practice of moving all network calls for a resource (e.g. orders) out of components and into a dedicated module (`orderService`), with methods like `list()`, `getById(id)`, `cancel(id)`. It solves duplication and drift: without it, every component that needs orders writes its own `fetch` call with its own copy of the URL, headers, and error handling, and a change to auth or the base URL has to be found and repeated everywhere those copies exist. With a service layer, there's exactly one place to change.
+
+### Q2. How is the Repository Pattern different from the Service Layer Pattern if both end up as "a module with `list()`/`getById()` methods"?
+
+**A.** A service layer is a concrete implementation, typically tied to one data source (a REST API). A repository is an *interface* describing which data operations exist, independent of how they're fulfilled — the service layer becomes one implementation of that interface (`restOrderRepository`), and you can write a second one (`createInMemoryOrderRepository`) for tests or Storybook. Consumers depend on the interface (`OrderRepository`), never on which concrete implementation is currently wired up.
+
+### Q3. Why would a repository interface make a component easier to unit test?
+
+**A.** Because the component (or the hook it uses) accepts `repository: OrderRepository` rather than importing a concrete `orderService` directly. A test can pass `createInMemoryOrderRepository([...seedData])` and assert on rendered output with zero network mocking, no intercepted `fetch` calls, and no flakiness from timing — the fake repository just resolves promises with in-memory data synchronously wrapped in `Promise.resolve`.
+
+### Q4. Coding question: given this component that imports a concrete service directly, refactor it to depend on a repository interface instead so it can be tested without hitting the network.
+
+```tsx
+import { orderService } from '../services/orderService';
+
+function OrderList() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  useEffect(() => {
+    orderService.list().then(setOrders);
+  }, []);
+  // ...
+}
+```
+
+**A.**
+
+```tsx
+interface OrderRepository {
+  list(): Promise<Order[]>;
+}
+
+function OrderList({ repository }: { repository: OrderRepository }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  useEffect(() => {
+    repository.list().then(setOrders);
+  }, [repository]);
+  // ...
+}
+
+// production
+<OrderList repository={restOrderRepository} />
+
+// test
+<OrderList repository={createInMemoryOrderRepository(seed)} />
+```
+
+Key points an interviewer looks for: the component's prop type is the interface, not a concrete class/object; `repository` is in the effect's dependency array; and the production vs. test wiring differs only at the call site, never inside `OrderList`.
+
+### Q5. What is the Facade Pattern, and what problem does it solve in a data layer?
+
+**A.** A facade wraps a multi-step operation that coordinates several services (e.g. "place an order" = check stock via `productService`, create the order via `orderService`, then notify the warehouse via `notificationService`) behind one simple function, like `checkoutFacade.placeOrder(cart)`. It solves the problem of that coordination sequence — which order to call things in, how to handle a partial failure — being re-derived (and drifting out of sync) in every component that can trigger the operation, instead of living in exactly one place.
+
+### Q6. How is the Facade Pattern different from the Service Layer Pattern?
+
+**A.** A service wraps calls to *one* resource/endpoint (`orderService` only knows about orders). A facade coordinates *multiple* services/repositories to fulfill one business operation that spans several of them. A facade's implementation typically calls into several services; a service's implementation typically just calls `fetch`.
+
+### Q7. When would wrapping a single service call in a facade be the wrong move?
+
+**A.** When there's no actual coordination logic — a facade method that does nothing but call `orderService.getById(id)` and return the result adds an indirection layer with zero behavior of its own. Facades earn their place only once a real operation spans multiple services with real sequencing or error-handling rules; for a single call, call the service directly.
+
+### Q8. What is the Dependency Injection Pattern in a React context, and how does it build on the Provider Pattern from Day 2?
+
+**A.** Instead of a module (a facade, a component) importing concrete services/repositories directly at the top of the file, those dependencies are supplied from outside via a `ServiceProvider` (React Context) at the composition root, and consumed through a `useServices()` hook — the exact same shape as Day 2's Provider Pattern (a provider owning a value, a custom hook that throws if used outside it), just applied to service instances instead of UI state like auth or theme.
+
+### Q9. Coding question: this facade hard-imports its dependencies, making it impossible to test without hitting the real API. Refactor it to receive its dependencies instead.
+
+```tsx
+import { restOrderRepository } from '../repositories/orderRepository';
+import { restProductRepository } from '../repositories/productRepository';
+
+export const checkoutFacade = {
+  async placeOrder(cart: CartItem[]) {
+    const product = await restProductRepository.getById(cart[0].productId);
+    // ...
+    return restOrderRepository.create({ items: cart });
+  },
+};
+```
+
+**A.**
+
+```tsx
+type Services = {
+  orderRepository: OrderRepository;
+  productRepository: ProductRepository;
+};
+
+function createCheckoutFacade(services: Services) {
+  return {
+    async placeOrder(cart: CartItem[]) {
+      const product = await services.productRepository.getById(cart[0].productId);
+      // ...
+      return services.orderRepository.create({ items: cart });
+    },
+  };
+}
+
+// production, wired via ServiceProvider/useServices()
+const checkoutFacade = createCheckoutFacade({
+  orderRepository: restOrderRepository,
+  productRepository: restProductRepository,
+});
+
+// test
+const checkoutFacade = createCheckoutFacade({
+  orderRepository: createInMemoryOrderRepository(),
+  productRepository: createInMemoryProductRepository(seed),
+});
+```
+
+Key points an interviewer looks for: `createCheckoutFacade` is a factory taking dependencies as a parameter rather than importing them, and nothing inside the facade's returned methods changes between production and test — only what's passed in at construction time changes.
+
+### Q10. When would you deliberately skip Dependency Injection, even in an app that already has a service layer and repositories?
+
+**A.** When a dependency is a leaf-level, single-consumer utility that will never realistically be swapped or faked in a test — threading it through a `ServiceProvider` "for consistency" adds a context lookup and a factory function for no actual benefit. Reach for DI once something (usually a facade or a component with real business logic) genuinely needs to be tested with fakes, or genuinely needs to support more than one implementation (real API vs. mock, REST vs. GraphQL) at runtime.
+
+---
+
+<!-- Add Day 6 questions below as you complete Day 6 -->
