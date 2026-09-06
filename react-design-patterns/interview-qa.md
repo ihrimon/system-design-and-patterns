@@ -446,4 +446,90 @@ Key points an interviewer looks for: `createCheckoutFacade` is a factory taking 
 
 ---
 
-<!-- Add Day 6 questions below as you complete Day 6 -->
+## Day 6 — Application Architecture Patterns
+
+### Q1. What is the Feature-Based Architecture Pattern, and what problem does it solve?
+
+**A.** It means organizing folders by business domain/feature (`features/orders/`, `features/products/`) instead of by technical file type (`components/`, `hooks/`, `services/`). It solves the problem of a single feature's files being scattered across every type-based folder — understanding or deleting "how orders work" in a type-based structure means hunting through `components/`, `hooks/`, `services/`, and `types/` for every file that happens to relate to orders, instead of finding them all in one place.
+
+### Q2. Does Feature-Based Architecture mean *every* component lives inside a feature folder?
+
+**A.** No — genuinely shared, cross-feature UI (a generic `Button`, `Modal`, or the Day 5 `apiClient.ts`) still belongs in a top-level `components/`/`services/` folder. The rule is: if a file only makes sense in the context of one feature, it lives inside that feature's folder; if it's reused by multiple unrelated features, it stays shared. The failure mode to avoid is treating the shared folder as a dumping ground for everything, which recreates the original type-based mess one level up.
+
+### Q3. What is Atomic Design, and what problem does it solve inside a shared component library?
+
+**A.** Atomic Design (from Brad Frost) organizes UI components into layers of increasing complexity: atoms (a single HTML element with no business meaning, like `Button`), molecules (a few atoms composed together, like a `SearchBar`), and organisms (molecules/atoms plus real domain data, like an `OrderTableRow`). It solves the problem of components of wildly different complexity sitting at the same folder level with no signal about which ones are safe, generic building blocks versus which already encode business-specific logic — so a "make buttons rounder" change doesn't accidentally touch something that isn't a generic button anymore.
+
+### Q4. Coding question: is this component an atom, a molecule, or an organism? Why?
+
+```tsx
+function PriceTag({ amount }: { amount: number }) {
+  return <Badge>{formatCurrency(amount)}</Badge>;
+}
+```
+
+**A.** A molecule. It composes one atom (`Badge`) with a small piece of formatting logic (`formatCurrency`), but it still has no knowledge of a specific business entity like an order or a product — it just renders a formatted number. An organism would be something like `OrderTableRow`, which takes a real `Order` object and assembles several atoms/molecules (a `PriceTag`, a `Button`) around actual domain data.
+
+### Q5. Why do design systems like Material UI or Shopify's Polaris document components using atoms/molecules/organisms language?
+
+**A.** Because it gives designers and engineers a shared vocabulary for "how generic is this component," independent of any specific product feature. A designer can say "this needs to be a new molecule" and an engineer immediately knows it composes a couple of atoms but shouldn't contain business logic — without that shared layering, the same conversation requires explaining the component's exact scope from scratch every time.
+
+### Q6. What is the Container/Presentational Pattern, and what problem does it solve?
+
+**A.** It splits a component into a **container** (owns data-fetching/state, renders no markup itself) and a **presentational** component (pure rendering, driven entirely by props, no data-fetching). It solves two problems at once: a component that both fetches and renders can't be reused with a different data source (e.g., already-fetched search results) without editing it, and it can't be unit-tested or shown in Storybook without mocking the network every time, even though the test only cares about rendering.
+
+### Q7. Coding question: split this component into a presentational `OrderTableView` and a container `OrderTableContainer`.
+
+```tsx
+function OrderTable() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    orderService.list().then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, []);
+  if (loading) return <Spinner />;
+  return <table>{orders.map((o) => <OrderTableRow key={o.id} order={o} />)}</table>;
+}
+```
+
+**A.**
+
+```tsx
+function OrderTableView({ orders, loading }: { orders: Order[]; loading: boolean }) {
+  if (loading) return <Spinner />;
+  return <table>{orders.map((o) => <OrderTableRow key={o.id} order={o} />)}</table>;
+}
+
+function OrderTableContainer() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    orderService.list().then((data) => {
+      setOrders(data);
+      setLoading(false);
+    });
+  }, []);
+  return <OrderTableView orders={orders} loading={loading} />;
+}
+```
+
+Key points an interviewer looks for: `OrderTableView` takes `orders`/`loading` as plain props and contains zero data-fetching code, and `OrderTableContainer` contains zero JSX of its own beyond rendering the view — the split is total, not partial.
+
+### Q8. Why do many modern React codebases consider the Container/Presentational Pattern partly outdated, and what replaced it?
+
+**A.** A custom hook (Day 3's Custom Hooks Pattern) usually achieves the same separation with less boilerplate: `const { orders, loading } = useOrders();` inside the *same* component that renders the table gives you data/rendering separation without needing a whole extra Container component and an additional layer of props. The pattern hasn't disappeared, though — it's still exactly the model Storybook uses (every story renders a presentational component with hardcoded props, never through a real fetch), and it's still relevant when a container needs to wrap multiple presentational children or do server-side work a hook can't.
+
+### Q9. How do Feature-Based Architecture, Atomic Design, and Container/Presentational relate to each other in one real codebase?
+
+**A.** They answer different-scoped questions and typically apply together rather than as alternatives. Feature-Based Architecture answers "where do files live" at the whole-app level (one folder per business domain). Atomic Design answers a narrower question inside the shared, cross-feature UI layer — how components are organized by complexity. Container/Presentational (or its modern hook-based equivalent) answers a question at the level of one component — how its data-fetching is separated from its rendering. A real dashboard's `features/orders/` folder can contain an `OrderTable` organism that's itself split into a view plus a `useOrders()` hook.
+
+### Q10. When would introducing all three of these patterns at once be overkill?
+
+**A.** In a small app with a handful of screens and components — a `features/` split for three files, an atoms/molecules/organisms taxonomy for eight components, and a Container/Presentational split for every component adds structure with no problem yet to justify it. As with every pattern in this checklist, the rule of thumb is the same: reach for the structure once the app's actual size and team size create the pain it solves, not preemptively.
+
+---
+
+<!-- Add Day 7 questions below as you complete Day 7 -->

@@ -43,11 +43,13 @@
 
 📖 Deep dive → [Day 5: Data & Service Layer Patterns](day-05-data-and-service-layer-patterns/README.md)
 
-### Day 6: Application Architecture Patterns
+### Day 6: Application Architecture Patterns ✅
 
-- [ ] Feature-Based Architecture Pattern
-- [ ] Atomic Design Pattern
-- [ ] Container/Presentational Pattern
+- [x] Feature-Based Architecture Pattern
+- [x] Atomic Design Pattern
+- [x] Container/Presentational Pattern
+
+📖 Deep dive → [Day 6: Application Architecture Patterns](day-06-application-architecture-patterns/README.md)
 
 ### Day 7: Server State & Data Fetching Patterns
 
